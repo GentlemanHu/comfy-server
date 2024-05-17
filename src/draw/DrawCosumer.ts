@@ -168,35 +168,44 @@ export class DrawConsumer {
   /**
    * 初始化与绘画服务端的链接
    */
-  async websocketInit(server_url: string): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      if (!this.validateWsconnect()) {
-        const url = server_url.split('//')[1];
-        this.ws_client = new Websocket(
-          `${server_url.includes('https') ? 'wss' : 'ws'}://${url}/ws?clientId=${this.clientId}`,
+async websocketInit(server_url: string): Promise<boolean> {
+  return new Promise(async (resolve) => {
+    if (!this.validateWsconnect()) {
+      const url = server_url.split('//')[1];
+      const basicUsername = this.drawService.basicUsername;
+      const basicPassword = this.drawService.basicPassword;
+      const auth = btoa(`${basicUsername}:${basicPassword}`);
+
+      this.ws_client = new Websocket(
+        `${server_url.includes('https') ? 'wss' : 'ws'}://${url}/ws?clientId=${this.clientId}`,
+        {
+          headers: {
+            Authorization: `Basic ${auth}`,
+          },
+        },
+      );
+      this.ws_client.onopen = () => {
+        this.logger.debug(
+          '链接绘画服务器成功,链接状态：',
+          this.ws_client.readyState,
         );
-        this.ws_client.onopen = () => {
-          this.logger.debug(
-            '链接绘画服务器成功,链接状态：',
-            this.ws_client.readyState,
-          );
-          resolve(true);
-        };
-        this.ws_client.onerror = () => {
-          this.logger.error('链接绘画服务器失败');
-          resolve(false);
-        };
-        setTimeout(() => {
-          if (this.ws_client.readyState !== 1) {
-            this.logger.error('链接绘画服务器超时');
-            resolve(false);
-          }
-        }, 500);
-      } else {
         resolve(true);
-      }
-    });
-  }
+      };
+      this.ws_client.onerror = () => {
+        this.logger.error('链接绘画服务器失败');
+        resolve(false);
+      };
+      setTimeout(() => {
+        if (this.ws_client.readyState !== 1) {
+          this.logger.error('链接绘画服务器超时');
+          resolve(false);
+        }
+      }, 500);
+    } else {
+      resolve(true);
+    }
+  });
+}
 
   /**
    * 验证链接状态

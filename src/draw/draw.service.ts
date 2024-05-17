@@ -72,6 +72,8 @@ export class DrawService {
   );
   private oss_enable = this.configService.get('OSS_ACCESSKEYSECRET');
   private accesstoken = ''; //访问远程服务器必须的token
+  public basicUsername = this.configService.get('CONFIG_COMFYUI_BASIC_AUTH_USERNAME');
+  public basicPassword = this.configService.get('CONFIG_COMFYUI_BASIC_AUTH_PASSWORD');
   constructor(
     @InjectQueue('draw') private drawQueue: Queue,
     private readonly cacheService: CacheService,
