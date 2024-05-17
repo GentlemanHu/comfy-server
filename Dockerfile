@@ -42,5 +42,6 @@ ENV CONFIG_COMFYUI_QUENE_REDIS_PORT=6379
 EXPOSE 3001
 EXPOSE 3002
 
+
 # 设置入口点为启动脚本
 ENTRYPOINT ["npm", "run", "start:prod"]
