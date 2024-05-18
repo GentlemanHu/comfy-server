@@ -105,7 +105,8 @@ export class DrawService {
     headers: {
       'Access-Control-Allow-Origin': '*',
       Accept: '*/*',
-      Authorization: 'Bearer ' + this.configService.get('CONFIG_COMFYUI_TOKEN'),
+      // Authorization: 'Bearer ' + this.configService.get('CONFIG_COMFYUI_TOKEN'),
+      Authorization: `Basic ${btoa(`${this.basicUsername}:${this.basicPassword}`)}`,
     },
   });
 
