@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main  # 当推送到主分支时触发
+      - master  # 当推送到主分支时触发
   workflow_dispatch:
   
 jobs:
