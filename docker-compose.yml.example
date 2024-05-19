@@ -20,6 +20,7 @@ services:
     environment:
       # 必须！！重要配置！！！- Comfy UI服务器地址，注意不能是127.0.0.1，容器内无法访问，查看网络获取
       - CONFIG_COMFYUI_SERVER_URL=http://192.168.0.107:8188
+      - CONFIG_BASE_POST=3001
       #  必须配置，MongoDB配置，用户管理
       - CONFIG_DB_MONGO_URI=mongodb://172.20.0.3:27017
       - CONFIG_DB_MONGO_USERNAME=username

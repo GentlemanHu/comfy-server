@@ -39,3 +39,7 @@ docker-compose.yml
 .env.production
 
 temp.png
+
+mongo/
+mysql/
+src/draw/data/test_perfect_api.json
