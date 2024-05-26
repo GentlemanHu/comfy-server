@@ -137,8 +137,8 @@ export class DrawService {
       const job = await this.sendToQueue(data);
       const intervalId = setInterval(async () => {
         //   查询任务状态
-        this.logger.debug(`定时器查询绘画进度中………………${intervalId}`);
         const jobTemp = await this.drawQueue.getJob(job.id);
+        this.logger.debug(`定时器查询绘画进度中………………${intervalId}------${jobTemp}----IScOMPLETED---${jobTemp.isCompleted()}`);
         if (await jobTemp.isCompleted()) {
           this.logger.log(
             '任务完成',
