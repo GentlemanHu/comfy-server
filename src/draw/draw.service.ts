@@ -136,10 +136,20 @@ export class DrawService {
     return new Promise(async (resolve, reject) => {
       const job = await this.sendToQueue(data);
       const intervalId = setInterval(async () => {
-        //   查询任务状态
+        // 查询任务状态
         const jobTemp = await this.drawQueue.getJob(job.id);
-        this.logger.debug(`定时器查询绘画进度中………………${intervalId}------${jobTemp}----IScOMPLETED---${jobTemp.isCompleted()}`);
-        if (await jobTemp.isCompleted()) {
+  
+        // 使用 await 等待 isCompleted() 和 isFailed() 的 Promise 解析
+        const isCompleted = await jobTemp.isCompleted();
+        const isFailed = await jobTemp.isFailed();
+  
+        this.logger.debug(
+          `定时器查询绘画进度中………………${intervalId}------${JSON.stringify(
+            jobTemp,
+          )}----IScOMPLETED---${isCompleted}`,
+        );
+  
+        if (isCompleted) {
           this.logger.log(
             '任务完成',
             jobTemp.returnvalue,
@@ -147,42 +157,41 @@ export class DrawService {
           );
           clearInterval(intervalId);
           resolve(jobTemp.returnvalue);
-        }
-        if (await jobTemp.isFailed()) {
+        } else if (isFailed) {
           // 任务失败,尝试去按照prompt_id去远程服务器获取结果
           const { prompt_id } = jobTemp.data;
           const server = this.remote_comfyui || this.local_comfyui;
           if (server) {
-            const { data } = await this.comfyuiAxios.get(
-              `${server}/history/${prompt_id}`,
-            );
-            this.logger.log('远程服务器获取结果成功', data);
-            if (data[prompt_id]) {
-              //从data中尝试解构出来结果
-              const { outputs } = data[prompt_id];
-              Object.keys(outputs).forEach((key) => {
-                console.log(key, outputs[key]);
-                if (
-                  outputs[key]['images'] &&
-                  outputs[key]['images'].length > 0
-                ) {
-                  let imageUrl = '';
-                  const { filename, subfolder, type } =
-                    outputs[key]['images'][0];
-                  if (subfolder) {
-                    imageUrl = `${server}/view?subfolder=${subfolder}&filename=${filename}&type=${type}`;
-                  } else {
-                    imageUrl = `${server}/view?filename=${filename}&type=${type}`;
+            try {
+              const { data } = await this.comfyuiAxios.get(
+                `${server}/history/${prompt_id}`,
+              );
+              this.logger.log('远程服务器获取结果成功', data);
+              if (data[prompt_id]) {
+                //从data中尝试解构出来结果
+                const { outputs } = data[prompt_id];
+                for (const key in outputs) {
+                  console.log(key, outputs[key]);
+                  if (outputs[key]['images'] && outputs[key]['images'].length > 0) {
+                    let imageUrl = '';
+                    const { filename, subfolder, type } = outputs[key]['images'][0];
+                    if (subfolder) {
+                      imageUrl = `${server}/view?subfolder=${subfolder}&filename=${filename}&type=${type}`;
+                    } else {
+                      imageUrl = `${server}/view?filename=${filename}&type=${type}`;
+                    }
+                    clearInterval(intervalId);
+                    resolve(imageUrl);
+                    return;
                   }
-                  clearInterval(intervalId);
-                  resolve(imageUrl);
-                  return;
                 }
-              });
+              }
+            } catch (error) {
+              this.logger.error('远程服务器获取结果失败', error);
             }
           }
           clearInterval(intervalId);
-          reject({ staus: 'error', message: '任务失败' });
+          reject({ status: 'error', message: '任务失败' });
         }
       }, 500);
     });
